@@ -198,12 +198,12 @@ function report(){
 function fname(x){return 'detail-report-'+(S.date||new Date().toISOString().slice(0,10))+'.'+x}
 function dl(data,ext){if(!DL){try{var bb=data instanceof Blob?data:new Blob([data],{type:'text/plain'}),u=URL.createObjectURL(bb),a=document.createElement('a');a.href=u;a.download=fname(ext);document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000)}catch(e){$('exn').textContent='Download blocked; use Copy text.'}return}DL.save({filename:fname(ext),data:data}).catch(function(e){if(e&&e.code!=='declined')$('exn').textContent='Export unavailable here ('+(e.code||'error')+').'})}
 function xe(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-function para(t,o){o=o||{};return `<w:p><w:pPr>${o.sh?`<w:shd w:val='clear' w:color='auto' w:fill='E8E8E8'/>`:''}<w:spacing w:before='${o.bf||0}' w:after='${o.af||40}'/>${o.bu?`<w:ind w:left='360' w:hanging='360'/>`:''}${o.c?`<w:jc w:val='center'/>`:''}</w:pPr><w:r><w:rPr><w:rFonts w:ascii='Calibri' w:hAnsi='Calibri'/>${o.b?'<w:b/>':''}<w:sz w:val='${o.sz||22}'/></w:rPr><w:t xml:space='preserve'>${xe(t)}</w:t></w:r></w:p>`}
+function para(t,o){o=o||{};return `<w:p><w:pPr>${o.sh?`<w:shd w:val='clear' w:color='auto' w:fill='E8E8E8'/>`:''}<w:spacing w:before='${o.bf||0}' w:after='${o.af||40}'/>${o.bu?`<w:ind w:left='360' w:hanging='360'/>`:''}${o.c?`<w:jc w:val='center'/>`:''}</w:pPr><w:r><w:rPr><w:rFonts w:ascii='Aptos' w:hAnsi='Aptos' w:cs='Aptos'/>${o.b?'<w:b/>':''}<w:sz w:val='${o.sz||24}'/></w:rPr><w:t xml:space='preserve'>${xe(t)}</w:t></w:r></w:p>`}
 function docxBlob(){
-  var B=[],hd=function(t){B.push(para(t,{b:1,sz:24,sh:1,bf:240,af:80}))},li=function(t){B.push(para('• '+t,{bu:1}))};
+  var B=[],hd=function(t){B.push(para(t,{b:1,sz:26,sh:1,bf:240,af:80}))},li=function(t){B.push(para('• '+t,{bu:1}))};
   function nm(a,x){var n=names(a);if(!n.length)B.push(para('—'));n.forEach(function(p){li(p.name+(x&&p[x]?' — '+p[x]:''))})}
   function lines(s){return String(s||'').split('\n').map(function(x){return x.trim()}).filter(Boolean)}
-  B.push(para('Detail Report',{b:1,sz:36,af:120}));
+  B.push(para('Detail Report',{b:1,sz:40,af:120}));
   hd('Protectee(s)');nm(S.prot);
   hd('Date and Location(s)');B.push(para(S.date||'—',{b:1}));nm(S.locs,'addr');
   hd('Nature of Detail');var nat=lines(S.nature);if(!nat.length)nat=['—'];nat.forEach(function(s){B.push(para(s))});
@@ -216,7 +216,7 @@ function docxBlob(){
   z.file('[Content_Types].xml',H+`<Types xmlns='http://schemas.openxmlformats.org/package/2006/content-types'><Default Extension='rels' ContentType='application/vnd.openxmlformats-package.relationships+xml'/><Default Extension='xml' ContentType='application/xml'/><Override PartName='/word/document.xml' ContentType='application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml'/></Types>`);
   z.file('_rels/.rels',H+`<Relationships xmlns='http://schemas.openxmlformats.org/package/2006/relationships'><Relationship Id='rId1' Type='http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument' Target='word/document.xml'/></Relationships>`);
   z.file('word/document.xml',H+`<w:document xmlns:w='http://schemas.openxmlformats.org/wordprocessingml/2006/main'><w:body>${B.join('')}<w:sectPr><w:pgSz w:w='12240' w:h='15840'/><w:pgMar w:top='1080' w:right='1080' w:bottom='1080' w:left='1080' w:header='720' w:footer='720' w:gutter='0'/></w:sectPr></w:body></w:document>`);
-  return z.generateAsync({type:'blob'});
+  return z.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
 }
 $('ex_h').addEventListener('click',function(){docxBlob().then(function(b){dl(b,'docx')})});
 $('ex_t').addEventListener('click',function(){dl(text(),'txt')});

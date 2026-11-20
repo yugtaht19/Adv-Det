@@ -1,0 +1,4 @@
+var C='detail-report-v1',U=['./','index.html','manifest.webmanifest','icon.png','https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'];
+self.addEventListener('install',function(e){e.waitUntil(caches.open(C).then(function(c){return Promise.all(U.map(function(u){return c.add(u).catch(function(){})}))}).then(function(){return self.skipWaiting()}))});
+self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(k){return Promise.all(k.filter(function(x){return x!==C}).map(function(x){return caches.delete(x)}))}).then(function(){return self.clients.claim()}))});
+self.addEventListener('fetch',function(e){if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(function(r){var f=fetch(e.request).then(function(res){var cp=res.clone();caches.open(C).then(function(c){c.put(e.request,cp)});return res}).catch(function(){return r});return r||f}))});

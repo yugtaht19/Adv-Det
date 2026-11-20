@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Detail Report">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1f4e79">
+<title>Detail Report</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--bg:#f4f5f3;--card:#fff;--tx:#1b1d1f;--mu:#6a6f75;--bd:#d6d9d5;--ac:#1f4e79;--on:#fff;--dg:#a33;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#121416;--card:#1c1f22;--tx:#e8eaec;--mu:#9aa0a6;--bd:#34393e;--ac:#6fa8dc;--on:#0b1620;--dg:#ee7777}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#121416;--card:#1c1f22;--tx:#e8eaec;--mu:#9aa0a6;--bd:#34393e;--ac:#6fa8dc;--on:#0b1620;--dg:#ee7777}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:720px;margin:0 auto;padding:14px 12px 60px}
+h1{font-size:20px;margin:6px 0 2px}
+.sub{color:var(--mu);font-size:13px;margin:0 0 12px}
+section{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin:0 0 12px}
+h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);margin:0 0 8px}
+input,textarea{width:100%;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:9px 10px}
+textarea{min-height:80px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:6px}
+.row.x{grid-template-columns:1fr 1fr 1fr auto}
+@media (max-width:520px){.row,.row.x{grid-template-columns:1fr 1fr auto}.row.x input:nth-child(3){grid-column:1/3;grid-row:2}.row.x button{grid-row:1;grid-column:3}}
+button{font:inherit;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:8px;padding:9px 12px;cursor:pointer}
+button.p{background:var(--ac);color:var(--on);border-color:var(--ac);font-weight:600}
+button.x{color:var(--dg);padding:9px 11px}
+button:disabled{opacity:.5}
+.add{margin-top:2px;font-size:14px}
+.ent{position:relative}
+.eb{display:flex;gap:6px}
+.eb input{flex:1}
+.opt{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:14px;color:var(--mu)}
+.opt input{width:auto}
+#dd,#nd{position:absolute;left:0;right:0;top:100%;margin-top:4px;background:var(--card);border:1px solid var(--bd);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.18);z-index:5;overflow:hidden}
+#dd div,#nd div{padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;gap:8px}
+#dd div:last-child,#nd div:last-child{border:0}
+#dd small,#nd small{color:var(--mu)}
+.le{border-top:1px solid var(--bd);padding:8px 0;font-size:15px}
+.le time{display:block;color:var(--mu);font:12px ui-monospace,Menlo,monospace}
+.le a{color:var(--ac);font-size:13px}
+.empty{color:var(--mu);font-size:14px}
+.bar{display:flex;flex-wrap:wrap;gap:8px}
+.note{color:var(--mu);font-size:12px;margin-top:8px}
+</style>
+</head>
+<body>
+<main>
+<h1>Detail Report</h1>
+<p class="sub">Data stays on this device, in this browser only.</p>
+
+<section><h2>Protectee(s)</h2><div id="l_prot"></div><button class="add" data-add="prot">+ Add protectee</button></section>
+
+<section><h2>Date and Location(s)</h2>
+<input type="date" id="date" aria-label="Date" style="margin-bottom:8px">
+<div id="l_locs"></div><button class="add" data-add="locs">+ Add location</button></section>
+
+<section><h2>Nature of Detail</h2><textarea id="nature" placeholder="Type of detail, movement, event…"></textarea></section>
+
+<section><h2>Parlor Information</h2><div id="l_parl"></div><button class="add" data-add="parl">+ Add parlor location</button></section>
+
+<section><h2>Agents/Hours</h2><div id="l_agents"></div><button class="add" data-add="agents">+ Add agent</button></section>
+
+<section><h2>Activity</h2>
+<div class="ent">
+<div class="eb"><input id="entry" autocomplete="off" autocapitalize="sentences" placeholder="Type a name or location… (@ people, # places)"><button class="p" id="go">Log</button></div>
+<div id="dd" hidden></div>
+</div>
+
+<div id="log"></div></section>
+
+<section><h2>Notes</h2><div class="ent"><textarea id="notes" placeholder="Notes…"></textarea><div id="nd" hidden></div></div></section>
+
+<section><h2>Export</h2>
+<div class="bar"><button class="p" id="ex_h" disabled>Word (.docx)</button><button id="ex_t" disabled>Text (.txt)</button><button id="cp">Copy text</button></div>
+<p class="note" id="exn">Word file opens in Word, Google Docs, or your phone’s document viewer.</p>
+<div style="margin-top:12px"><button class="x" id="clr">Clear all data</button></div>
+</section>
+<section><h2>Auto-fill phrases</h2><p class="note" style="margin:0 0 8px">Turn a phrase off to stop it appearing while you type.</p><div id="phr"></div></section>
+</main>
+
+<script>
+var K='advance_v1',S={prot:[],locs:[],parl:[],agents:[],date:'',nature:'',parlor:'',notes:'',log:[],off:[]},DL=null,PH=['en route','departs','arriving at','received by','departing','on coverage','sto','in residence','wheels down','wheels up'];
+try{var raw=localStorage.getItem(K);if(raw)S=Object.assign(S,JSON.parse(raw))}catch(e){}
+if(typeof S.parlor==='string'&&S.parlor.trim()&&!S.parl.length){S.parl.push({name:S.parlor.trim(),abbr:'',addr:''});S.parlor=''}
+function save(){try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}}
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+var CFG={prot:null,parl:['addr','Address / notes'],locs:['addr','Address / notes'],agents:['hrs','Hours (e.g. 0600–1800)']};
+
+function renderList(k){
+  var c=CFG[k],h='';
+  S[k].forEach(function(p,i){
+    var a=' data-k="'+k+'" data-i="'+i+'" data-f="';
+    h+='<div class="row'+(c?' x':'')+'"><input'+a+'name" placeholder="Name" value="'+esc(p.name)+'"><input'+a+'abbr" placeholder="Log abbreviation" value="'+esc(p.abbr)+'">'+(c?'<input'+a+c[0]+'" placeholder="'+c[1]+'" value="'+esc(p[c[0]])+'">':'')+'<button class="x" data-del="'+k+'" data-i="'+i+'" aria-label="Remove">×</button></div>';
+  });
+  $('l_'+k).innerHTML=h;
+}
+function fmt(ts){var d=new Date(ts),p=function(n){return String(n).padStart(2,'0')};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds())}
+function hm(ts){var d=new Date(ts),p=function(n){return String(n).padStart(2,'0')};return p(d.getHours())+p(d.getMinutes())}
+function geoTxt(e){return e.lat!=null?e.lat+', '+e.lon+(e.acc?' (±'+e.acc+' m)':''):(e.geo?'location unavailable':'')}
+function renderLog(){
+  if(!S.log.length){$('log').innerHTML='<p class="empty">No entries yet.</p>';return}
+  $('log').innerHTML=S.log.slice().reverse().map(function(e){
+    var g=e.lat!=null?' <a target="_blank" rel="noopener" href="https://maps.google.com/?q='+e.lat+','+e.lon+'">'+esc(geoTxt(e))+'</a>':(e.geo?' <span class="empty">location unavailable</span>':'');
+    return '<div class="le"><time>'+fmt(e.ts)+'</time>'+esc(e.text)+g+'</div>';
+  }).join('');
+}
+function renderAll(){['prot','locs','parl','agents'].forEach(renderList);$('date').value=S.date;$('nature').value=S.nature;$('notes').value=S.notes;renderLog();renderPhr()}
+
+document.addEventListener('input',function(ev){
+  var t=ev.target;
+  if(t.dataset&&t.dataset.k){S[t.dataset.k][+t.dataset.i][t.dataset.f]=t.value;save()}
+  else if(['date','nature','notes'].indexOf(t.id)>-1){S[t.id]=t.value;save()}
+});
+document.addEventListener('click',function(ev){
+  var b=ev.target.closest('button');if(!b)return;
+  if(b.dataset.add){var k=b.dataset.add,o={name:'',abbr:''};if(CFG[k])o[CFG[k][0]]='';S[k].push(o);save();renderList(k);var r=$('l_'+k).querySelectorAll('input[data-f="name"]');r[r.length-1].focus()}
+  else if(b.dataset.del){S[b.dataset.del].splice(+b.dataset.i,1);save();renderList(b.dataset.del)}
+});
+
+/* Autocomplete */
+var inp=$('entry'),dd=$('dd');
+function cands(){
+  var a=[];
+  S.prot.forEach(function(p){a.push({t:'Protectee',n:p.name,a:p.abbr||p.name,k:'p'})});
+  S.agents.forEach(function(p){a.push({t:'Agent',n:p.name,a:p.abbr||p.name,k:'p'})});
+  S.locs.forEach(function(p){a.push({t:'Location',n:p.name,a:p.abbr||p.name,k:'l'})});
+  S.parl.forEach(function(p){a.push({t:'Parlor',n:p.name,a:p.abbr||p.name,k:'l'})});
+  PH.forEach(function(p){if(S.off.indexOf(p)<0)a.push({t:'Phrase',n:p,a:p,k:'x'})});
+  return a.filter(function(x){return x.n});
+}
+function token(){var m=inp.value.match(/(\S*)$/);return m?m[1]:''}
+function showDD(){
+  var tok=token(),mode='',q=tok;
+  if(tok[0]==='@'||tok[0]==='#'){mode=tok[0]==='@'?'p':'l';q=tok.slice(1)}
+  q=q.toLowerCase();
+  if(!q&&!mode){dd.hidden=true;return}
+  var res=cands().filter(function(x){
+    if(mode&&x.k!==mode)return false;
+    var h=(x.n+' '+x.a).toLowerCase();
+    return !q||h.split(/[\s.]+/).some(function(w){return w&&w.indexOf(q)===0})||h.replace(/\s/g,'').indexOf(q)===0||x.a.toLowerCase().replace(/\s/g,'').indexOf(q)===0;
+  }).slice(0,6);
+  if(!res.length){dd.hidden=true;return}
+  dd.innerHTML=res.map(function(x){return '<div data-a="'+esc(x.a)+'"'+(x.k==='x'?' data-ph="1"':'')+'><span>'+esc(x.a)+(x.a!==x.n?' <small>'+esc(x.n)+'</small>':'')+'</span><small>'+x.t+'</small></div>'}).join('');
+  dd.hidden=false;
+}
+inp.addEventListener('input',showDD);
+inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();addEntry()}});
+document.addEventListener('pointerdown',function(e){if(!e.target.closest('#dd,#entry'))dd.hidden=true;if(!e.target.closest('#nd,#notes'))nd.hidden=true});
+function pick(a){var tok=token();inp.value=inp.value.slice(0,inp.value.length-tok.length)+a+' ';dd.hidden=true;inp.focus();var n=inp.value.length;try{inp.setSelectionRange(n,n)}catch(e){}}
+dd.addEventListener('pointerdown',function(e){e.preventDefault()});
+dd.addEventListener('click',function(e){var d=e.target.closest('div[data-a]');if(d){ins(inp,d.dataset.a,d.dataset.ph);dd.hidden=true}});
+
+/* Activity entries: timestamp is set at tap and cannot be edited */
+function commit(e){S.log.push(e);save();inp.value='';dd.hidden=true;$('go').disabled=false;renderLog()}
+function addEntry(){
+  var t=inp.value.trim();if(!t)return;
+  var e={ts:new Date().toISOString(),text:t};
+  if(false){
+    if(!navigator.geolocation){e.geo='unavailable';commit(e);return}
+    $('go').disabled=true;
+    navigator.geolocation.getCurrentPosition(function(p){e.lat=+p.coords.latitude.toFixed(5);e.lon=+p.coords.longitude.toFixed(5);e.acc=Math.round(p.coords.accuracy);commit(e)},function(){e.geo='unavailable';commit(e)},{enableHighAccuracy:true,timeout:8000,maximumAge:0});
+  }else commit(e);
+}
+$('go').addEventListener('click',addEntry);
+
+/* Export */
+function names(a,x){return a.filter(function(p){return p.name})}
+function text(){
+  var L=[];
+  function lst(t,a,x,na){L.push('',t.toUpperCase());var n=names(a);if(!n.length)L.push('—');n.forEach(function(p){L.push('- '+p.name+(p.abbr&&!na?' ('+p.abbr+')':'')+(x&&p[x]?' — '+p[x]:''))})}
+  L.push('DETAIL REPORT');
+  lst('Protectee(s)',S.prot,null,1);
+  L.push('','DATE AND LOCATION(S)',S.date||'—');
+  names(S.locs).forEach(function(p){L.push('- '+p.name+(p.addr?' — '+p.addr:''))});
+  L.push('','NATURE OF DETAIL',S.nature||'—');lst('Parlor Information',S.parl,'addr',1);
+  lst('Agents/Hours',S.agents,'hrs',1);
+  L.push('','ACTIVITY');if(!S.log.length)L.push('—');
+  S.log.forEach(function(e){L.push(hm(e.ts)+' - '+e.text+(geoTxt(e)?' ['+geoTxt(e)+']':''))});
+  L.push('','NOTES');var nl=String(S.notes||'').split('\n').map(function(s){return s.trim().replace(/^[-•*]\s*/,'')}).filter(Boolean);if(!nl.length)L.push('—');nl.forEach(function(s){L.push('- '+s)});L.push('','END OF REPORT');
+  return L.join('\n');
+}
+function report(){
+  function li(a,x,na){var n=names(a);return n.length?'<ul>'+n.map(function(p){return '<li>'+esc(p.name)+(p.abbr&&!na?' <em>('+esc(p.abbr)+')</em>':'')+(x&&p[x]?' — '+esc(p[x]):'')+'</li>'}).join('')+'</ul>':'<p>—</p>'}
+  function pr(s){return '<p>'+(esc(s).replace(/\n/g,'<br>')||'—')+'</p>'}
+  function bl(s){var a=String(s||'').split('\n').map(function(x){return x.trim().replace(/^[-•*]\s*/,'')}).filter(Boolean);return a.length?'<ul>'+a.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>':'<p>—</p>'}
+  var rows=S.log.map(function(e){return '<p class="a">'+hm(e.ts)+' - '+esc(e.text)+(geoTxt(e)?' ['+esc(geoTxt(e))+']':'')+'</p>'}).join('')||'<p>—</p>';
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Detail Report</title><style>body{font:12pt Calibri,Arial,sans-serif;max-width:7.5in;margin:0.5in auto;color:#000}h1{font-size:18pt;border-bottom:2px solid #000}h2{font-size:12pt;text-transform:uppercase;margin:16pt 0 4pt;background:#e8e8e8;padding:3pt 6pt}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:3pt 5pt;font-size:10pt;vertical-align:top;text-align:left}</style></head><body><h1>Detail Report</h1><h2>Protectee(s)</h2>'+li(S.prot,null,1)+'<h2>Date and Location(s)</h2><p><b>'+esc(S.date||'—')+'</b></p>'+li(S.locs,'addr',1)+'<h2>Nature of Detail</h2>'+pr(S.nature)+'<h2>Parlor Information</h2>'+li(S.parl,'addr',1)+'<h2>Agents/Hours</h2>'+li(S.agents,'hrs',1)+'<h2>Activity</h2>'+rows+'<h2>Notes</h2>'+bl(S.notes)+'<p style="text-align:center;font-weight:bold;margin-top:24pt">END OF REPORT</p></body></html>';
+}
+function fname(x){return 'detail-report-'+(S.date||new Date().toISOString().slice(0,10))+'.'+x}
+function dl(data,ext){if(!DL){try{var bb=data instanceof Blob?data:new Blob([data],{type:'text/plain'}),u=URL.createObjectURL(bb),a=document.createElement('a');a.href=u;a.download=fname(ext);document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000)}catch(e){$('exn').textContent='Download blocked; use Copy text.'}return}DL.save({filename:fname(ext),data:data}).catch(function(e){if(e&&e.code!=='declined')$('exn').textContent='Export unavailable here ('+(e.code||'error')+').'})}
+function xe(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function para(t,o){o=o||{};return `<w:p><w:pPr>${o.sh?`<w:shd w:val='clear' w:color='auto' w:fill='E8E8E8'/>`:''}<w:spacing w:before='${o.bf||0}' w:after='${o.af||40}'/>${o.bu?`<w:ind w:left='360' w:hanging='360'/>`:''}${o.c?`<w:jc w:val='center'/>`:''}</w:pPr><w:r><w:rPr><w:rFonts w:ascii='Calibri' w:hAnsi='Calibri'/>${o.b?'<w:b/>':''}<w:sz w:val='${o.sz||22}'/></w:rPr><w:t xml:space='preserve'>${xe(t)}</w:t></w:r></w:p>`}
+function docxBlob(){
+  var B=[],hd=function(t){B.push(para(t,{b:1,sz:24,sh:1,bf:240,af:80}))},li=function(t){B.push(para('• '+t,{bu:1}))};
+  function nm(a,x){var n=names(a);if(!n.length)B.push(para('—'));n.forEach(function(p){li(p.name+(x&&p[x]?' — '+p[x]:''))})}
+  function lines(s){return String(s||'').split('\n').map(function(x){return x.trim()}).filter(Boolean)}
+  B.push(para('Detail Report',{b:1,sz:36,af:120}));
+  hd('Protectee(s)');nm(S.prot);
+  hd('Date and Location(s)');B.push(para(S.date||'—',{b:1}));nm(S.locs,'addr');
+  hd('Nature of Detail');var nat=lines(S.nature);if(!nat.length)nat=['—'];nat.forEach(function(s){B.push(para(s))});
+  hd('Parlor Information');nm(S.parl,'addr');
+  hd('Agents/Hours');nm(S.agents,'hrs');
+  hd('Activity');if(!S.log.length)B.push(para('—'));S.log.forEach(function(e){B.push(para(hm(e.ts)+' - '+e.text+(geoTxt(e)?' ['+geoTxt(e)+']':'')))});
+  hd('Notes');var nl=lines(S.notes).map(function(s){return s.replace(/^[-•*]\s*/,'')});if(!nl.length)B.push(para('—'));nl.forEach(function(s){li(s)});
+  B.push(para('END OF REPORT',{b:1,c:1,bf:360}));
+  var H=`<?xml version='1.0' encoding='UTF-8' standalone='yes'?>`,z=new JSZip();
+  z.file('[Content_Types].xml',H+`<Types xmlns='http://schemas.openxmlformats.org/package/2006/content-types'><Default Extension='rels' ContentType='application/vnd.openxmlformats-package.relationships+xml'/><Default Extension='xml' ContentType='application/xml'/><Override PartName='/word/document.xml' ContentType='application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml'/></Types>`);
+  z.file('_rels/.rels',H+`<Relationships xmlns='http://schemas.openxmlformats.org/package/2006/relationships'><Relationship Id='rId1' Type='http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument' Target='word/document.xml'/></Relationships>`);
+  z.file('word/document.xml',H+`<w:document xmlns:w='http://schemas.openxmlformats.org/wordprocessingml/2006/main'><w:body>${B.join('')}<w:sectPr><w:pgSz w:w='12240' w:h='15840'/><w:pgMar w:top='1080' w:right='1080' w:bottom='1080' w:left='1080' w:header='720' w:footer='720' w:gutter='0'/></w:sectPr></w:body></w:document>`);
+  return z.generateAsync({type:'blob'});
+}
+$('ex_h').addEventListener('click',function(){docxBlob().then(function(b){dl(b,'docx')})});
+$('ex_t').addEventListener('click',function(){dl(text(),'txt')});
+$('cp').addEventListener('click',function(){var b=this;try{navigator.clipboard.writeText(text()).then(function(){b.textContent='Copied'},function(){b.textContent='Copy blocked'})}catch(e){b.textContent='Copy blocked'}setTimeout(function(){b.textContent='Copy text'},1800)});
+/* Phrases + notes autocomplete */
+var nt=$('notes'),nd=$('nd');
+function ins(el,a,ph){var pos=el.selectionStart==null?el.value.length:el.selectionStart,v=el.value.slice(0,pos),rest=el.value.slice(pos),cut=0;
+  if(ph){var lo=v.toLowerCase();for(var i=a.length;i>0;i--){var pre=a.slice(0,i);if(lo.endsWith(pre)&&(lo.length===i||/\s/.test(lo.charAt(lo.length-i-1)))){cut=i;break}}}
+  if(!cut)cut=v.match(/(\S*)$/)[1].length;
+  var nv=v.slice(0,v.length-cut)+a+' ';el.value=nv+rest;el.focus();try{el.setSelectionRange(nv.length,nv.length)}catch(e){}
+  if(el===nt){S.notes=nt.value;save()}}
+function find(q,mode){return cands().filter(function(x){if(mode&&x.k!==mode)return false;var h=(x.n+' '+x.a).toLowerCase();return !q||h.split(/[\s.]+/).some(function(w){return w&&w.indexOf(q)===0})||h.replace(/\s/g,'').indexOf(q)===0}).slice(0,6)}
+function nShow(){var v=nt.value.slice(0,nt.selectionStart),tok=v.match(/(\S*)$/)[1],mode='',q=tok;
+  if(tok[0]==='@'||tok[0]==='#'){mode=tok[0]==='@'?'p':'l';q=tok.slice(1)}
+  q=q.toLowerCase();if(!q&&!mode){nd.hidden=true;return}
+  var res=find(q,mode);if(!res.length){nd.hidden=true;return}
+  nd.innerHTML=res.map(function(x){return '<div data-a="'+esc(x.a)+'"'+(x.k==='x'?' data-ph="1"':'')+'><span>'+esc(x.a)+(x.a!==x.n?' <small>'+esc(x.n)+'</small>':'')+'</span><small>'+x.t+'</small></div>'}).join('');nd.hidden=false}
+nt.addEventListener('input',nShow);
+nd.addEventListener('pointerdown',function(e){e.preventDefault()});
+nd.addEventListener('click',function(e){var d=e.target.closest('div[data-a]');if(d){ins(nt,d.dataset.a,d.dataset.ph);nd.hidden=true}});
+function renderPhr(){$('phr').innerHTML=PH.map(function(p,i){return '<label class="opt" style="justify-content:space-between;color:var(--tx);margin:6px 0"><span>'+p+'</span><input type="checkbox" data-pi="'+i+'"'+(S.off.indexOf(p)<0?' checked':'')+'></label>'}).join('')}
+document.addEventListener('change',function(e){var t=e.target;if(t.dataset&&t.dataset.pi!=null&&t.type==='checkbox'){var p=PH[+t.dataset.pi],i=S.off.indexOf(p);if(t.checked&&i>-1)S.off.splice(i,1);if(!t.checked&&i<0)S.off.push(p);save()}});
+var armed=false;
+$('clr').addEventListener('click',function(){
+  var b=this;
+  if(!armed){armed=true;b.textContent='Tap again to erase everything';setTimeout(function(){armed=false;b.textContent='Clear all data'},3500);return}
+  S={prot:[],locs:[],parl:[],agents:[],date:'',nature:'',parlor:'',notes:'',log:[],off:S.off};save();renderAll();armed=false;b.textContent='Clear all data';
+});
+(async function(){try{if(window.claude&&claude.use)DL=await claude.use('downloads')}catch(e){}
+  $('ex_h').disabled=!window.JSZip;$('ex_t').disabled=false;if(!DL){$('exn').textContent='Downloads go to your browser’s downloads folder.'}
+})();
+renderAll();
+</script>
+<script>if('serviceWorker' in navigator)window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})</script>
+</body>
+</html>
